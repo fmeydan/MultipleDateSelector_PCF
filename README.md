@@ -6,8 +6,7 @@ Lets users select multiple dates visually and stores the result in a single CRM 
 ## ✨ Features
 ### Feature	Description
 📅 Multi-date selection	Select/deselect dates from the calendar UI
-🔄 Automatic sync	Saves as JSON array to underlying field
-🎯 UI highlights	Selected days are visually highlighted
+🔄 Saves as JSON array to underlying field
 🧩 Universal	Works with Text / Multi-Line Text fields
 📱 Responsive	Fit inside forms and side dialogs
 ## Preview
