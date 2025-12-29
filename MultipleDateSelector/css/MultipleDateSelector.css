@@ -1,0 +1,123 @@
+/* Multiple Date Selector PCF Control Styles */
+
+.multiple-date-selector {
+    font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", sans-serif;
+    padding: 10px;
+    background-color: #ffffff;
+    border-radius: 4px;
+}
+
+.multiple-date-selector h3 {
+    margin: 0 0 15px 0;
+    color: #323130;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.multiple-date-selector .section {
+    margin-bottom: 15px;
+}
+
+.multiple-date-selector .section-label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #323130;
+    font-size: 14px;
+}
+
+.multiple-date-selector .date-input-container {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.multiple-date-selector .date-input {
+    padding: 8px 12px;
+    border: 1px solid #d1d1d1;
+    border-radius: 4px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s ease;
+    width: 200px;
+}
+
+.multiple-date-selector .date-input:focus {
+    border-color: #0078d4;
+    box-shadow: 0 0 0 1px #0078d4;
+}
+
+.multiple-date-selector .selected-dates-container {
+    min-height: 40px;
+    border: 1px solid #d1d1d1;
+    border-radius: 4px;
+    padding: 8px;
+    background-color: #fafafa;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    align-items: center;
+}
+
+.multiple-date-selector .date-tag {
+    display: inline-flex;
+    align-items: center;
+    background-color: #0078d4;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.multiple-date-selector .date-tag:hover {
+    background-color: #106ebe;
+}
+
+.multiple-date-selector .date-tag .remove-button {
+    margin-left: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 0 2px;
+    border-radius: 50%;
+    transition: background-color 0.2s ease;
+}
+
+.multiple-date-selector .date-tag .remove-button:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.multiple-date-selector .empty-message {
+    color: #666;
+    font-style: italic;
+    font-size: 14px;
+}
+
+/* Responsive design */
+@media (max-width: 600px) {
+    .multiple-date-selector .date-input-container {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .multiple-date-selector .date-input {
+        width: 100%;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .multiple-date-selector .date-input {
+        border-width: 2px;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .multiple-date-selector * {
+        transition: none !important;
+    }
+}

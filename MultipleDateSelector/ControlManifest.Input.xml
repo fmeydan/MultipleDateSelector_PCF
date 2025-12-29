@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest>
+  <control namespace="FuatMeydan" constructor="MultipleDateSelector" version="1.4.0"
+    display-name-key="Multiple Date Selector"
+    description-key="A control for selecting multiple dates with freetext input"
+    control-type="standard">
+    <type-group name="textareas">
+      <type>SingleLine.Text</type>
+      <type>SingleLine.TextArea</type>
+      <type>Multiple</type>
+    </type-group>
+
+    <!-- Property that the control will bind to -->
+    <property name="value" display-name-key="Value"
+      description-key="Combined value of selected dates and freetext"
+      of-type-group="textareas" usage="bound" required="true" />
+
+    <!-- Resources -->
+    <resources>
+      <code path="index.ts" order="1" />
+      <css path="css/MultipleDateSelector.css" order="1" />
+    </resources>
+
+    <!-- Feature usage -->
+    <feature-usage>
+      <uses-feature name="Device.captureAudio" required="false" />
+      <uses-feature name="Device.captureImage" required="false" />
+      <uses-feature name="Device.captureVideo" required="false" />
+      <uses-feature name="Device.getBarcodeValue" required="false" />
+      <uses-feature name="Device.getCurrentPosition" required="false" />
+      <uses-feature name="Device.pickFile" required="false" />
+      <uses-feature name="Utility" required="true" />
+      <uses-feature name="WebAPI" required="false" />
+    </feature-usage>
+  </control>
+</manifest>
