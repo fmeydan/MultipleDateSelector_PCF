@@ -1,11 +1,11 @@
-🌟 Multi-Date Picker PCF Control
+🌟 Multi-Date Selector PCF Control
 
 
 
 
 
 
-An elegant and responsive multi-date picker for Dynamics 365 / Model-Driven Apps.
+An elegant and responsive multi-date selector for Dynamics 365 / Model-Driven Apps.
 Lets users select multiple dates visually and stores the result in a single CRM field as a JSON date array.
 
 ✨ Features
@@ -46,7 +46,7 @@ Add the field (Text or Multi-line Text) to your form
 
 Go to Field Properties → Controls
 
-Add: Multi-Date Picker PCF
+Add: Multi-Date Selector PCF
 
 Enable for Web & Mobile
 
