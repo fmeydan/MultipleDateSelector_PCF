@@ -8,6 +8,7 @@ export class MultipleDateSelector implements ComponentFramework.StandardControl<
     private _combinedValue = "";
     private _lastInputValue = "";
     private _isRemoving = false;
+    private _dateFormat: string = "0"; // 0 = FullDate (dd/mm/yyyy), 1 = YearOnly
 
     // UI Elements
     private _dateInput: HTMLInputElement;
@@ -20,6 +21,10 @@ export class MultipleDateSelector implements ComponentFramework.StandardControl<
         this._notifyOutputChanged = notifyOutputChanged;
         this._container = container;
 
+        // Load date format configuration
+        const dateFormatValue = context.parameters.dateFormat.raw;
+        this._dateFormat = dateFormatValue !== null && dateFormatValue !== undefined ? dateFormatValue.toString() : "0";
+
         this.createUI();
         this.loadExistingValues();
         this.updateCombinedValue();
@@ -28,7 +33,7 @@ export class MultipleDateSelector implements ComponentFramework.StandardControl<
 
     private createUI(): void {
         // Main container
-        
+
         this._container.style.fontFamily = "Segoe UI, sans-serif";
 
         // Title
@@ -55,14 +60,14 @@ export class MultipleDateSelector implements ComponentFramework.StandardControl<
 
         this._dateInput.addEventListener('change', (e) => {
             // Only add if we're not in the middle of a remove operation
-             const input = e.target as HTMLInputElement; // ✅ cast to correct type
+            const input = e.target as HTMLInputElement; // ✅ cast to correct type
             if (!this._isRemoving && this._dateInput.value && this._dateInput.value !== this._lastInputValue) {
-                 const date = this.parseDate(this._dateInput.value);
-                    if (date && !isNaN(date.getTime())&& input.validity.valid){
- this.addDate();
-                this._lastInputValue = this._dateInput.value;
-                    }
-               
+                const date = this.parseDate(this._dateInput.value);
+                if (date && !isNaN(date.getTime()) && input.validity.valid) {
+                    this.addDate();
+                    this._lastInputValue = this._dateInput.value;
+                }
+
             }
         });
 
@@ -92,31 +97,12 @@ export class MultipleDateSelector implements ComponentFramework.StandardControl<
 
         this._container.appendChild(selectedSection);
 
-
-        // const addButton = document.createElement("button");
-        // addButton.textContent = "Add";
-        // addButton.style.padding = "8px 12px";
-        // addButton.style.backgroundColor = "#0078d4";
-        // addButton.style.color = "white";
-        // addButton.style.border = "none";
-        // addButton.style.borderRadius = "4px";
-        // addButton.style.cursor = "pointer";
-        // addButton.style.width = "20%";
-
-        // addButton.addEventListener('click', () => {
-        //     if (!this._isRemoving && this._dateInput.value) {
-        //         this.addDate();
-        //         this._dateInput.value = "";
-        //         this._lastInputValue = "";
-        //     }
-        // });
-        // dateInputContainer.appendChild(addButton);
         this.updateSelectedDatesDisplay();
     }
 
     private addDate(): void {
         if (this._dateInput.value && !this._isRemoving) {
-            const selectedDate = new Date(this._dateInput.value);
+            const selectedDate = this.parseISODateAsLocal(this._dateInput.value);
 
             // Check if date is already selected
             const dateExists = this._selectedDates.some(date =>
@@ -174,7 +160,17 @@ export class MultipleDateSelector implements ComponentFramework.StandardControl<
             dateTag.style.cursor = "pointer";
 
             const dateText = document.createElement("span");
-            dateText.textContent = date.toLocaleDateString();
+            // Format display based on selected format
+            if (this._dateFormat === "1") {
+                // Year only
+                dateText.textContent = date.getFullYear().toString();
+            } else {
+                // Full date (dd/mm/yyyy)
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = date.getFullYear();
+                dateText.textContent = `${day}/${month}/${year}`;
+            }
             dateTag.appendChild(dateText);
 
             const removeButton = document.createElement("span");
@@ -197,9 +193,24 @@ export class MultipleDateSelector implements ComponentFramework.StandardControl<
     }
 
     private updateCombinedValue(): void {
-        this._combinedValue = this._selectedDates
-            .map(date => date.toISOString().split('T')[0]) // Store as YYYY-MM-DD
-            .join(","); // Use comma as separator
+        if (this._dateFormat === "1") {
+            // Year only format
+            this._combinedValue = this._selectedDates
+                .map(date => date.getFullYear().toString())
+                .filter((value, index, self) => self.indexOf(value) === index) // Remove duplicate years
+                .sort()
+                .join(",");
+        } else {
+            // Full date format (dd/mm/yyyy)
+            this._combinedValue = this._selectedDates
+                .map(date => {
+                    const day = String(date.getDate()).padStart(2, '0');
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const year = date.getFullYear();
+                    return `${day}/${month}/${year}`;
+                })
+                .join(",");
+        }
 
         this._notifyOutputChanged();
     }
@@ -218,10 +229,19 @@ export class MultipleDateSelector implements ComponentFramework.StandardControl<
     }
 
     public updateView(context: ComponentFramework.Context<IInputs>): void {
+        // Update date format if it changed
+        const dateFormatValue = context.parameters.dateFormat.raw;
+        const newFormat = dateFormatValue !== null && dateFormatValue !== undefined ? dateFormatValue.toString() : "0";
+        if (newFormat !== this._dateFormat) {
+            this._dateFormat = newFormat;
+            this.updateSelectedDatesDisplay();
+            this.updateCombinedValue();
+        }
+
         // Only update if the external value is different from our current combined value
         const externalValue = context.parameters.value.raw || "";
         if (externalValue !== this._combinedValue) {
-            this.parseExternalValue(this._combinedValue);
+            this.parseExternalValue(externalValue);
         }
     }
 
@@ -254,31 +274,73 @@ export class MultipleDateSelector implements ComponentFramework.StandardControl<
             // Clear everything if no value
             this._selectedDates = [];
             this.updateSelectedDatesDisplay();
-
         }
     }
- 
-    private parseDate(dateString: string): Date | null {
-        // Try multiple date formats for better compatibility
-        const formats = [
-            // Standard formats
-            dateString,
-            // US format MM/DD/YYYY
-            dateString.replace(/(\d{1,2})\/(\d{1,2})\/(\d{4})/, '$3-$1-$2'),
-            // European format DD/MM/YYYY  
-            dateString.replace(/(\d{1,2})\/(\d{1,2})\/(\d{4})/, '$3-$2-$1'),
-            // ISO format variants
-            dateString.replace(/(\d{1,2})\/(\d{1,2})\/(\d{4})/, '$1/$2/$3'),
-        ];
 
-        for (const format of formats) {
-            const date = new Date(format);
-            if (!isNaN(date.getTime())) {
-                return date;
+    private parseDate(dateString: string): Date | null {
+        // Check if it's year-only format (4 digits)
+        if (/^\d{4}$/.test(dateString)) {
+            const year = parseInt(dateString, 10);
+            if (year >= 1900 && year <= 2100) {
+                return new Date(year, 0, 1); // January 1st of the year in local time
+            }
+            return null;
+        }
+
+        // Check if it's ISO format (YYYY-MM-DD)
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+            return this.parseISODateAsLocal(dateString);
+        }
+
+        // Try multiple date formats for better compatibility
+        const slashMatch = dateString.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        if (slashMatch) {
+            const first = parseInt(slashMatch[1], 10);
+            const second = parseInt(slashMatch[2], 10);
+            const year = parseInt(slashMatch[3], 10);
+
+            // If first number > 12, it must be day (European format DD/MM/YYYY)
+            if (first > 12 && second <= 12) {
+                const date = this.parseISODateAsLocal(`${year}-${slashMatch[2]}-${slashMatch[1]}`);
+                if (date && !isNaN(date.getTime()) && this.isValidDate(date, first, second, year)) {
+                    return date;
+                }
+            }
+
+            // If second number > 12, it must be day (US format interpretation would be invalid)
+            if (second > 12 && first <= 12) {
+                const date = this.parseISODateAsLocal(`${year}-${slashMatch[1]}-${slashMatch[2]}`);
+                if (date && !isNaN(date.getTime()) && this.isValidDate(date, second, first, year)) {
+                    return date;
+                }
+            }
+
+            // Both could be valid (both <= 12), try US format first, then European
+            const usFormat = this.parseISODateAsLocal(`${year}-${slashMatch[1]}-${slashMatch[2]}`);
+            if (usFormat && !isNaN(usFormat.getTime()) && this.isValidDate(usFormat, second, first, year)) {
+                return usFormat;
+            }
+
+            const euFormat = this.parseISODateAsLocal(`${year}-${slashMatch[2]}-${slashMatch[1]}`);
+            if (euFormat && !isNaN(euFormat.getTime()) && this.isValidDate(euFormat, first, second, year)) {
+                return euFormat;
             }
         }
 
         return null;
+    }
+
+    private isValidDate(date: Date, day: number, month: number, year: number): boolean {
+        // Verify the parsed date matches the input values
+        return date.getDate() === day && 
+               date.getMonth() === month - 1 && 
+               date.getFullYear() === year;
+    }
+
+    private parseISODateAsLocal(dateString: string): Date {
+        // Parse YYYY-MM-DD format as local time, not UTC
+        const [year, month, day] = dateString.split('-').map(Number);
+        return new Date(year, month - 1, day);
     }
 
     public getOutputs(): IOutputs {

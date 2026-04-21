@@ -1,19 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest>
-  <control namespace="FuatMeydan" constructor="MultipleDateSelector" version="1.4.0"
+  <control namespace="FuatMeydan" constructor="MultipleDateSelector" version="1.5"
     display-name-key="Multiple Date Selector"
     description-key="A control for selecting multiple dates with freetext input"
     control-type="standard">
     <type-group name="textareas">
       <type>SingleLine.Text</type>
       <type>SingleLine.TextArea</type>
-      <type>Multiple</type>
     </type-group>
 
     <!-- Property that the control will bind to -->
     <property name="value" display-name-key="Value"
       description-key="Combined value of selected dates and freetext"
       of-type-group="textareas" usage="bound" required="true" />
+
+    <!-- Date Format Configuration -->
+    <property name="dateFormat" display-name-key="Date Format"
+      description-key="Select date storage format: FullDate (dd/mm/yyyy) or YearOnly"
+      of-type="Enum" usage="input" required="false" >
+      <value name="Full Date" display-name-key="Full Date (dd/mm/yyyy)">0</value>
+      <value name="Year Only" display-name-key="Year Only">1</value>
+    </property>
 
     <!-- Resources -->
     <resources>

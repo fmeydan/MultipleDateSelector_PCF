@@ -5,6 +5,7 @@
 // Define IInputs and IOutputs Type. They should match with ControlManifest.
 export interface IInputs {
     value: ComponentFramework.PropertyTypes.StringProperty;
+    dateFormat: ComponentFramework.PropertyTypes.EnumProperty<"0" | "1">;
 }
 export interface IOutputs {
     value?: string;

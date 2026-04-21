@@ -1,6 +1,6 @@
 {
   "name": "MultipleDateSelector",
-  "version": "1.4.0",
+  "version": "1.5",
   "description": "Multiple Date Selector PCF Control",
   "scripts": {
     "build": "pcf-scripts build",
