@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest>
-  <control namespace="FuatMeydan" constructor="MultipleDateSelector" version="1.7"
+  <control namespace="FuatMeydan" constructor="MultipleDateSelector" version="1.7.0"
     display-name-key="Multiple Date Selector"
     description-key="A control for selecting multiple dates with freetext input"
     control-type="standard">
