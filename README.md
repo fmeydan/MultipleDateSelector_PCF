@@ -1,12 +1,12 @@
 # 🌟 Multi-Date Selector PCF Control
 
 An elegant and responsive multi-date selector for Dynamics 365 / Model-Driven Apps.
-Lets users select multiple dates visually and stores the result in a single CRM field as a JSON date array.
+Lets users select multiple dates visually and stores the result in a single CRM field as a JSON array. Full dates use the browser's regional format; year-only mode stores years.
 
 ## ✨ Features
 ### Feature	Description
 📅 Multi-date selection	Select/deselect dates from the calendar UI
-🔄 Saves as JSON array to underlying field
+🔄 Saves selected dates to the underlying field
 🧩 Universal	Works with Text / Multi-Line Text fields
 📱 Responsive	Fit inside forms and side dialogs
 ## Preview
@@ -38,8 +38,8 @@ Enable for Web & Mobile
 
 Publish all settings
 
-✔ Selected dates are stored as JSON:
+Selected dates are stored as a JSON array. Full-date entries follow the browser's regional format (the example below is en-US); year-only mode stores year strings:
 
-["2025-01-05", "2025-01-20", "2025-02-01"]
+`["1/5/2025","1/20/2025","2/1/2025"]`
 
-
+`["2025","2026"]`

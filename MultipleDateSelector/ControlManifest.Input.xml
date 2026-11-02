@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest>
-  <control namespace="FuatMeydan" constructor="MultipleDateSelector" version="1.5"
+  <control namespace="FuatMeydan" constructor="MultipleDateSelector" version="1.7"
     display-name-key="Multiple Date Selector"
     description-key="A control for selecting multiple dates with freetext input"
     control-type="standard">
@@ -16,9 +16,9 @@
 
     <!-- Date Format Configuration -->
     <property name="dateFormat" display-name-key="Date Format"
-      description-key="Select date storage format: FullDate (dd/mm/yyyy) or YearOnly"
+      description-key="Select date display and storage format: browser regional date format or YearOnly"
       of-type="Enum" usage="input" required="false" >
-      <value name="Full Date" display-name-key="Full Date (dd/mm/yyyy)">0</value>
+      <value name="Full Date" display-name-key="Full Date (browser regional format)">0</value>
       <value name="Year Only" display-name-key="Year Only">1</value>
     </property>
 

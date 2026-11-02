@@ -8,7 +8,7 @@ export class MultipleDateSelector implements ComponentFramework.StandardControl<
     private _combinedValue = "";
     private _lastInputValue = "";
     private _isRemoving = false;
-    private _dateFormat: string = "0"; // 0 = FullDate (dd/mm/yyyy), 1 = YearOnly
+    private _dateFormat: string = "0"; // 0 = FullDate (browser locale), 1 = YearOnly
 
     // UI Elements
     private _dateInput: HTMLInputElement;
@@ -165,11 +165,7 @@ export class MultipleDateSelector implements ComponentFramework.StandardControl<
                 // Year only
                 dateText.textContent = date.getFullYear().toString();
             } else {
-                // Full date (dd/mm/yyyy)
-                const day = String(date.getDate()).padStart(2, '0');
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const year = date.getFullYear();
-                dateText.textContent = `${day}/${month}/${year}`;
+                dateText.textContent = date.toLocaleDateString();
             }
             dateTag.appendChild(dateText);
 
@@ -195,21 +191,13 @@ export class MultipleDateSelector implements ComponentFramework.StandardControl<
     private updateCombinedValue(): void {
         if (this._dateFormat === "1") {
             // Year only format
-            this._combinedValue = this._selectedDates
+            const years = this._selectedDates
                 .map(date => date.getFullYear().toString())
-                .filter((value, index, self) => self.indexOf(value) === index) // Remove duplicate years
-                .sort()
-                .join(",");
+                .filter((value, index, self) => self.indexOf(value) === index)
+                .sort();
+            this._combinedValue = JSON.stringify(years);
         } else {
-            // Full date format (dd/mm/yyyy)
-            this._combinedValue = this._selectedDates
-                .map(date => {
-                    const day = String(date.getDate()).padStart(2, '0');
-                    const month = String(date.getMonth() + 1).padStart(2, '0');
-                    const year = date.getFullYear();
-                    return `${day}/${month}/${year}`;
-                })
-                .join(",");
+            this._combinedValue = JSON.stringify(this._selectedDates.map(date => date.toLocaleDateString()));
         }
 
         this._notifyOutputChanged();
@@ -241,40 +229,54 @@ export class MultipleDateSelector implements ComponentFramework.StandardControl<
         // Only update if the external value is different from our current combined value
         const externalValue = context.parameters.value.raw || "";
         if (externalValue !== this._combinedValue) {
-            this.parseExternalValue(externalValue);
+            if (this.parseExternalValue(externalValue)) {
+                this.updateCombinedValue();
+            }
         }
     }
 
-    private parseExternalValue(value: string): void {
-        // Parse comma-separated dates from saved field value
-        if (value && value.trim()) {
-            const parts = value.split(',').map(part => part.trim());
-            this._selectedDates = [];
+    private parseExternalValue(value: string): boolean {
+        let parts: string[];
+        const trimmedValue = value.trim();
 
-            parts.forEach(part => {
-                if (part) {
-                    // Try different date formats to be more flexible
-                    const date = this.parseDate(part);
-                    if (date && !isNaN(date.getTime())) {
-                        // Check if this date is already in the array (avoid duplicates)
-                        const dateExists = this._selectedDates.some(existingDate =>
-                            existingDate.toDateString() === date!.toDateString()
-                        );
-                        if (!dateExists) {
-                            this._selectedDates.push(date);
-                        }
+        if (trimmedValue.startsWith("[")) {
+            let parsedValue: unknown;
+            try {
+                parsedValue = JSON.parse(trimmedValue);
+            } catch (error) {
+                console.error("Unable to parse saved date array:", error);
+                return false;
+            }
+
+            if (!Array.isArray(parsedValue) || !parsedValue.every(part => typeof part === "string")) {
+                console.error("Saved date value must be a JSON array of strings.");
+                return false;
+            }
+
+            parts = parsedValue;
+        } else {
+            // Continue accepting values saved by older versions of the control.
+            parts = trimmedValue ? trimmedValue.split(",").map(part => part.trim()) : [];
+        }
+
+        this._selectedDates = [];
+        parts.forEach(part => {
+            if (part) {
+                const date = this.parseDate(part);
+                if (date && !isNaN(date.getTime())) {
+                    const dateExists = this._selectedDates.some(existingDate =>
+                        existingDate.toDateString() === date.toDateString()
+                    );
+                    if (!dateExists) {
+                        this._selectedDates.push(date);
                     }
                 }
-            });
+            }
+        });
 
-            // Sort dates chronologically
-            this._selectedDates.sort((a, b) => a.getTime() - b.getTime());
-            this.updateSelectedDatesDisplay();
-        } else {
-            // Clear everything if no value
-            this._selectedDates = [];
-            this.updateSelectedDatesDisplay();
-        }
+        this._selectedDates.sort((a, b) => a.getTime() - b.getTime());
+        this.updateSelectedDatesDisplay();
+        return true;
     }
 
     private parseDate(dateString: string): Date | null {
@@ -290,6 +292,11 @@ export class MultipleDateSelector implements ComponentFramework.StandardControl<
         // Check if it's ISO format (YYYY-MM-DD)
         if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
             return this.parseISODateAsLocal(dateString);
+        }
+
+        const localizedDate = this.parseBrowserLocaleDate(dateString);
+        if (localizedDate) {
+            return localizedDate;
         }
 
         // Try multiple date formats for better compatibility
@@ -328,6 +335,44 @@ export class MultipleDateSelector implements ComponentFramework.StandardControl<
         }
 
         return null;
+    }
+
+    private parseBrowserLocaleDate(dateString: string): Date | null {
+        const formatParts = new Intl.DateTimeFormat().formatToParts(new Date(2006, 10, 22));
+        const fieldOrder = formatParts
+            .filter(part => part.type === "day" || part.type === "month" || part.type === "year")
+            .map(part => part.type);
+
+        if (fieldOrder.length !== 3) {
+            return null;
+        }
+
+        const localeDigits = Array.from(new Intl.NumberFormat(undefined, { useGrouping: false }).format(9876543210));
+        const digitMap = new Map(localeDigits.map((digit, index) => [digit, String(9 - index)]));
+        const normalizedValue = Array.from(dateString, character => digitMap.get(character) ?? character).join("");
+        const values = normalizedValue.match(/\d+/g);
+
+        if (!values || values.length !== fieldOrder.length) {
+            return null;
+        }
+
+        const dateParts: Partial<Record<"day" | "month" | "year", number>> = {};
+        fieldOrder.forEach((field, index) => {
+            if (field === "day" || field === "month" || field === "year") {
+                dateParts[field] = Number(values[index]);
+            }
+        });
+
+        const { day, month, year } = dateParts;
+        if (day === undefined || month === undefined || year === undefined) {
+            return null;
+        }
+
+        const date = this.parseISODateAsLocal(
+            `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`
+        );
+
+        return this.isValidDate(date, day, month, year) ? date : null;
     }
 
     private isValidDate(date: Date, day: number, month: number, year: number): boolean {
